@@ -2,7 +2,7 @@
 
 Predicting customer churn and estimating household income from service-usage data for a telecommunications provider — reducing reliance on costly third-party demographic data while identifying customers at risk of leaving.
 
-**[Live Dashboard →](#)** *(Tableau Public link goes here)*
+**[Live Dashboard →](https://public.tableau.com/app/profile/edward.henderson/viz/TelcoIncomeChurnModeling/Dashboard1)**
 
 ---
 
