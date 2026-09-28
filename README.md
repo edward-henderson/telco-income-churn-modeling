@@ -144,19 +144,22 @@ source workbook. Important limitations include:
 
 ## Repository Structure
 
-``` text
+```text
 ├── dashboard/
-│   └── telco_dashboard.twbx
+│   └── .gitkeep
 ├── data/
+│   └── DATA_NOTE.md
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_churn_model.ipynb
 │   └── 03_income_model.ipynb
 ├── src/
-│   └── modeling.py
+├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
+
+The Tableau workbook is published separately through the live dashboard link above and is not distributed in this repository. The `src/` directory is currently reserved for future reusable code; the validated analysis is implemented in the three notebooks.
 
 ## Tech Stack
 
