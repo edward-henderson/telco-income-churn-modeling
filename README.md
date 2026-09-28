@@ -1,99 +1,237 @@
 # Telecom Income & Churn Modeling
 
-Predicting customer churn and estimating household income from service-usage data for a telecommunications provider — reducing reliance on costly third-party demographic data while identifying customers at risk of leaving.
+Predicting customer churn and estimating customer income from telecom
+account and service-usage data, with an emphasis on model-selection
+tradeoffs, reproducibility, and the potential value of internal customer
+data.
 
-**[Live Dashboard →](https://public.tableau.com/app/profile/edward.henderson/viz/TelcoIncomeChurnModeling/Dashboard1)**
+**[Live Tableau
+Dashboard](https://public.tableau.com/app/profile/edward.henderson/viz/TelcoIncomeChurnModeling/Dashboard1)**
 
----
+------------------------------------------------------------------------
 
 ## Business Problem
 
-Telecom providers face two related challenges:
+Telecommunications providers collect substantial customer information
+through account history, service usage, tenure, and spending. This
+project examines two related analytical questions:
 
-1. **Churn risk** — identifying which customers are likely to cancel service, so retention offers can be targeted before they leave rather than after.
-2. **Income estimation** — third-party demographic and income data is expensive to license. If a company's own service-usage and account data (tenure, spend, equipment, service mix) can estimate income reasonably well, it reduces dependence on external data providers for segmentation and marketing decisions.
+1.  **Churn risk:** Can existing customer data identify customers with
+    elevated churn risk?
+2.  **Income estimation:** Does internal customer data contain enough
+    predictive signal to support income-related segmentation and
+    potentially reduce reliance on externally purchased demographic
+    information for some analytical use cases?
 
-This project tackles both using the same 1,000-customer dataset, treating them as two separate modeling problems that share a feature set.
+The two questions are modeled separately using the same 1,000-customer
+dataset.
 
-## Dataset
+## Dataset and Provenance
 
-- **1,000 customers**, **34 variables**, no missing values
-- Demographics: age, marital status, address tenure, education, employment, retirement status, gender, household size
-- Account/usage: service tenure, region, customer category, and monthly spend/usage across long-distance, toll-free, equipment, card, and wireless services
-- Service flags: multi-line, voicemail, internet, caller ID, call waiting, call forwarding, conferencing, e-billing
-- Targets: `income` (continuous) and `churn` (binary)
+The analysis uses a course-provided telecom dataset supplied through
+Colorado State University Global for a Statistics in Business Analytics
+portfolio assignment.
 
-*Note: this is course-provided sample data used for a Colorado State University Global capstone project; the raw file is not redistributed here — see [Data Access](#data-access) below.*
+The course materials describe the records as a random sample of
+approximately half of an unnamed telecommunications company's customers.
+Identifying information was removed for privacy, and the income field
+was obtained by the telecommunications company from an outside vendor.
+The original telecommunications company, outside income-data vendor,
+collection dates, geography, and upstream data provider are not
+identified in the available course materials.
 
-**Churn rate:** 27.4% (a class imbalance that matters for model evaluation — see [Approach](#approach))
+-   **1,000 customer records**
+-   **34 analytical variables**
+-   **No missing values**
+-   **Churn rate: 27.4%**
+-   Demographic, account, service-usage, and spending variables
+-   Targets: `churn` (binary) and `income` (continuous)
 
-## Approach
+The original workbook is **not redistributed in this repository**
+because redistribution rights have not been established.
 
-### Churn (classification)
-- Baseline: always predicting "no churn" gets 72.6% accuracy — so accuracy alone is a misleading metric here. Precision, recall, and ROC-AUC matter more.
-- Compared logistic regression against a random forest classifier.
-- Evaluated with an 75/25 stratified train/test split to preserve the churn class ratio.
-
-### Income (regression)
-- Compared linear regression against a random forest regressor.
-- Income is heavily right-skewed (median $47K, mean $77.5K, max $1,668K), so I also tested a **log-transformed target**, which is standard practice for skewed financial variables.
-- Excluded `lninc` (a pre-computed log-income field) from the feature set to avoid target leakage.
-
-## Results
+## Analytical Approach
 
 ### Churn Classification
 
-| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
-|---|---|---|---|---|---|
-| Baseline (majority class) | 72.6% | — | — | — | — |
-| Logistic Regression | 73.2% | 0.51 | 0.38 | 0.44 | **0.79** |
-| Random Forest | **75.6%** | **0.59** | 0.35 | 0.44 | 0.78 |
-
-Logistic regression edges out random forest on ROC-AUC and recall, meaning it's slightly better at *catching* customers who are actually going to churn — arguably the more important error to avoid in a retention context, since missing an at-risk customer costs more than a wasted retention offer.
-
-**Top predictors of churn:** tenure, long-distance monthly spend, equipment monthly spend, and employment length — newer, lower-usage, less-established customers churn more.
+-   Logistic regression compared with random forest classification.
+-   75/25 stratified train/test split with `random_state=42`.
+-   Logistic-regression scaling fitted on training data only.
+-   Accuracy, precision, recall, F1, ROC-AUC, and confusion matrices
+    evaluated.
+-   Majority-class baseline included because 72.6% of customers did not
+    churn.
 
 ### Income Regression
 
-| Model | R² | MAE | RMSE |
-|---|---|---|---|
-| Linear Regression (raw income) | 0.44 | $52.3K | $97.8K |
-| Linear Regression (log income) | **0.55** | **$42.1K** | — |
-| Random Forest (raw income) | 0.33 | $49.6K | $107.2K |
+The analysis compares linear regression on raw income, linear regression
+using a log-transformed income target, and random forest regression.
+`income` and the source dataset's precomputed `lninc` field are excluded
+from the predictor matrix to prevent target leakage.
 
-Log-transforming the target improved R² by ~25% and cut average error by $10K — the single biggest lever in this half of the project, and a good example of why understanding your target's distribution matters before picking a model.
+## Verified Results
 
-**Top predictors of income:** years employed, education level, card-service monthly spend, and address tenure.
+### Churn Classification
 
-## Repo Structure
+  Model                        Accuracy   Precision      Recall          F1     ROC-AUC
+  ------------------------- ----------- ----------- ----------- ----------- -----------
+  Majority-class baseline         72.6%         ---        0.0%         ---       0.500
+  Logistic Regression             73.2%       51.0%   **38.2%**       43.7%   **0.790**
+  Random Forest               **75.6%**   **58.5%**       35.3%   **44.0%**       0.776
 
-```
+Random forest achieved higher accuracy and precision. Logistic
+regression achieved higher recall and ROC-AUC and identified 26 churners
+compared with 24 for random forest. Logistic regression is treated as
+the preferred churn model when the decision objective emphasizes churn
+detection, discrimination, interpretability, and more stable
+generalization.
+
+Random-forest feature importance identified tenure, long-distance
+measures, and equipment-related measures among the important predictive
+signals. These are predictive associations, not causal churn drivers.
+
+### Income Regression
+
+  -------------------------------------------------------------------------
+  Model                            R²                MAE               RMSE
+  ---------------- ------------------ ------------------ ------------------
+  Linear                        0.442              52.34              97.77
+  Regression ---                                         
+  raw income                                             
+
+  Linear                    **0.549**          **42.00**          **87.87**
+  Regression ---                                         
+  log target,                                            
+  original-scale                                         
+  evaluation                                             
+
+  Random Forest                 0.335              49.42             106.68
+  --- raw income                                         
+  -------------------------------------------------------------------------
+
+The log-target linear model produced the strongest held-out performance
+of the tested implementations across R², MAE, and RMSE. Years employed
+and education emerged as important income predictors, particularly in
+the random-forest model.
+
+These results indicate meaningful predictive signal. They do **not**
+establish that internally estimated income can completely replace
+externally sourced customer-level income data.
+
+## Model Validation and Limitations
+
+Core numerical results were independently reproduced from the preserved
+source workbook. Important limitations include:
+
+-   **Class imbalance:** churn prevalence is 27.4%; accuracy should not
+    be interpreted alone.
+-   **Modest churn recall:** logistic recall is 38.2% at the implemented
+    threshold.
+-   **Random-forest overfitting:** the churn random forest shows a
+    material train/test performance gap.
+-   **Single holdout split:** results rely on one 75/25 split rather
+    than repeated cross-validation.
+-   **No class rebalancing or threshold optimization:** these were not
+    part of the validated implementation.
+-   **High-income error behavior:** errors increase toward the upper
+    tail, limiting precise individual estimates.
+-   **Log retransformation:** direct exponentiation is used without a
+    retransformation-bias correction.
+-   **Predictive, not causal:** model importance and coefficients do not
+    establish causal effects.
+-   **Scope:** results describe this dataset and these implementations,
+    not demonstrated production performance elsewhere.
+
+## Repository Structure
+
+``` text
+├── dashboard/
+│   └── telco_dashboard.twbx
+├── data/
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_churn_model.ipynb
 │   └── 03_income_model.ipynb
 ├── src/
 │   └── modeling.py
-├── dashboard/
-│   └── telco_dashboard.twbx
 ├── requirements.txt
 └── README.md
 ```
 
 ## Tech Stack
 
-Python (pandas, scikit-learn) · Tableau · originally prototyped in SAS Studio as part of a CSU Global capstone
+Python · pandas · NumPy · scikit-learn · matplotlib · seaborn · openpyxl
+· Jupyter · Tableau
 
-## Data Access
+The project originated in CSU Global coursework and was subsequently
+developed into a Python-based analytics case study.
 
-The dataset is provided through a Colorado State University Global course and is not included in this repo. A data dictionary and sample rows are available on request — reach out via [LinkedIn](https://linkedin.com/in/EdwardOHenderson).
+## Data Access and Reproduction
 
-## Next Steps
+The source workbook is not included in the public repository. Users who
+independently have authorized access can reproduce the analysis by
+placing an unchanged copy in the local data area.
 
-- Tune random forest hyperparameters and test gradient boosting (XGBoost) for both tasks
-- Address class imbalance in the churn model (SMOTE or class weighting) to improve recall
-- Build a customer segmentation layer (`custcat`) into the dashboard for marketing use cases
+Recommended convention:
 
----
+``` text
+data/
+└── raw/
+    └── TelcoExtraCSU-Global.xlsx
+```
 
-**Edward Henderson** | [LinkedIn](https://linkedin.com/in/EdwardOHenderson) | edward@edwardhenderson.net
+If the local filename differs, update the notebook data path
+accordingly. Do not commit the source workbook to the public repository.
+
+Install dependencies:
+
+``` bash
+pip install -r requirements.txt
+```
+
+Run notebooks in order:
+
+``` text
+1. notebooks/01_data_exploration.ipynb
+2. notebooks/02_churn_model.ipynb
+3. notebooks/03_income_model.ipynb
+```
+
+### Reproducibility Checkpoints
+
+A successful run should reproduce approximately:
+
+-   Dataset: **1,000 × 34**, with **0 missing values**
+-   Churn rate: **27.4%**
+-   Majority baseline: **72.6% accuracy**
+-   Logistic: **73.2% accuracy, 38.2% recall, ROC-AUC 0.790**
+-   Churn RF: **75.6% accuracy, 35.3% recall, ROC-AUC 0.776**
+-   Log-target linear income: **R² 0.549, MAE 42.00, RMSE 87.87**
+-   Income RF: **R² 0.335, MAE 49.42, RMSE 106.68**
+
+## Appropriate Interpretation
+
+This case study supports the conclusion that existing customer data
+contains useful predictive signal for churn risk and income-related
+patterns in this dataset. It also illustrates that increased model
+complexity did not automatically produce better out-of-sample
+performance.
+
+It should **not** be interpreted as demonstrating causal churn drivers,
+precise individual income estimation, complete replacement of purchased
+demographic data, production-ready performance, or universal superiority
+of one algorithm.
+
+## Future Model Development
+
+Potential future work includes cross-validation, class weighting or
+other imbalance treatments, decision-threshold optimization, alternative
+boosting models, retransformation-bias correction, and additional
+segmentation analysis. These are future development opportunities, not
+part of the validated implementation reported here.
+
+------------------------------------------------------------------------
+
+**Edward Henderson** \|
+[LinkedIn](https://linkedin.com/in/EdwardOHenderson) \|
+edward@edwardhenderson.net
