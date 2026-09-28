@@ -1,6 +1,8 @@
-# Data (course-provided, not redistributed)
-data/*.xlsx
-data/*.csv
+# Data (course-provided, redistribution rights not established)
+data/raw/
+data/**/*.xlsx
+data/**/*.xls
+data/**/*.csv
 
 # Python
 __pycache__/
@@ -8,6 +10,11 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
 
 # OS
 .DS_Store
